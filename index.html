@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flow State Reading</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#000;--card:#111113;--line:#222226;--tx:#fff;--mu:#8a8a93;--ac:#3b82f6;--ok:#22c55e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0;background:#050506;color:var(--tx);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+#app{position:relative;height:100%;max-width:430px;margin:0 auto;background:var(--bg);overflow:hidden}
+@media(min-width:600px){#app{height:min(860px,96%);margin-top:2vh;border-radius:34px;border:1px solid var(--line);box-shadow:0 30px 90px #000}}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:28px 24px;overflow-y:auto}
+.screen.on{display:flex}
+.kick{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ac);font-weight:600}
+.mu{color:var(--mu)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:56px;border-radius:18px;background:#fff;color:#000;font-weight:600;font-size:16px}
+.btn.dark{background:#000;color:#fff;border:1px solid var(--line)}
+.back{width:44px;height:44px;border-radius:50%;background:#141416;border:1px solid var(--line);display:grid;place-items:center;flex:none}
+svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+
+/* welcome */
+#welcome{background:radial-gradient(ellipse 60% 38% at 50% 0,#4a4a52 0,#000 70%);justify-content:flex-end;padding-bottom:36px}
+.sphere{position:absolute;left:50%;top:46%;width:300px;height:300px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 34% 22%,#6a6a72 0,#16161a 12%,#000 42%);box-shadow:inset 0 0 40px #000,0 40px 60px -20px #222;animation:float 7s ease-in-out infinite}
+.sphere::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse 30% 20% at 30% 20%,rgba(255,255,255,.28),transparent 70%)}
+@keyframes float{50%{transform:translate(-50%,-53%)}}
+.hero{position:relative;z-index:2;margin-bottom:auto;padding-top:34px}
+.hero h1{font-size:46px;line-height:1.05;font-weight:200;margin:12px 0 22px;letter-spacing:-.02em}
+.hero h1 b{display:block;font-weight:700}
+.hero p{color:var(--mu);font-size:17px;line-height:1.55;max-width:260px;margin:0}
+.link{display:block;margin:22px auto 0;color:var(--mu);font-size:13px;position:relative;z-index:2}
+
+/* reader stage */
+.stage{flex:1;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;font-weight:500;font-size:clamp(40px,13vw,58px);letter-spacing:-.02em;position:relative;min-height:140px}
+.stage span{white-space:nowrap}
+.stage .l{text-align:right}
+.stage .p{color:var(--ac)}
+.stage::before{content:"";position:absolute;left:50%;top:18%;height:64%;width:1px;background:linear-gradient(transparent,var(--ac),transparent);opacity:.35}
+.stage.demo{font-weight:700;font-size:clamp(44px,15vw,66px)}
+.panel{background:#121214;border:1px solid var(--line);border-radius:30px;padding:22px;margin:0 -8px}
+.row{display:flex;align-items:center;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+.row b{color:var(--ac);font-size:13px;letter-spacing:.04em}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:#1c2a44;margin:20px 0;outline-offset:8px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid #000;box-shadow:0 0 0 1px #444}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #000}
+.ctl{display:flex;align-items:center;justify-content:center;gap:28px;margin-bottom:18px}
+.ctl .sk{width:48px;height:48px;border-radius:50%;color:#9a9aa3;display:grid;place-items:center}
+.play{width:68px;height:68px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center}
+.play svg{fill:#000;stroke:#000;width:26px;height:26px}
+.bar{height:4px;background:#1a1a1e;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--ac);box-shadow:0 0 12px var(--ac);transition:width .15s}
+.chip{border:1px solid #2b4a8a;color:var(--ac);border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600}
+
+/* import */
+h2{font-size:30px;font-weight:300;margin:10px 0 8px;letter-spacing:-.01em}
+h2 b{font-weight:700}
+.opt{display:flex;align-items:center;gap:16px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:14px}
+.opt .ic{width:48px;height:48px;border-radius:14px;background:#1a1a1d;display:grid;place-items:center;flex:none}
+.opt strong{display:block;font-size:16px;font-weight:600}
+.opt small{color:var(--mu);font-size:12px}
+.opt .go{margin-left:auto;color:var(--mu)}
+.opt[disabled]{opacity:.4;cursor:default}
+.tag{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:.1em;background:#222;padding:4px 8px;border-radius:6px}
+textarea{width:100%;flex:1;min-height:200px;background:#111113;border:1px solid var(--line);border-radius:24px;padding:20px;color:#fff;font:inherit;font-size:17px;line-height:1.6;resize:none}
+.meta{display:flex;gap:40px;padding:16px 4px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+.meta b{display:block;color:#fff;font-size:15px;letter-spacing:0;text-transform:none;margin-top:4px;font-weight:600}
+
+/* library */
+.cur{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px 20px 24px;position:relative;overflow:hidden;margin:12px 0 28px}
+.cur h3{font-size:22px;line-height:1.25;margin:18px 0 8px;font-weight:600}
+.cur .bar{position:absolute;left:0;right:0;bottom:0;border-radius:0;height:5px}
+.item{display:flex;gap:16px;align-items:center;width:100%;text-align:left;padding:10px 0}
+.item .ic{width:56px;height:64px;border-radius:12px;background:#111113;border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--mu)}
+.item .bd{flex:1;min-width:0}
+.item strong{font-weight:600;font-size:16px}
+.pr{display:flex;align-items:center;gap:10px;margin:8px 0 6px}
+.pr .bar{flex:1;height:3px}
+.pr span{font-size:12px;color:var(--mu)}
+.nav{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);margin-inline:-24px;padding:14px 12px 0;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.nav button{display:flex;flex-direction:column;align-items:center;gap:6px;color:#6b6b74;padding:6px}
+.nav .a{color:var(--ac)}
+.nav .a svg{stroke:var(--ac)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
+.stat b{display:block;font-size:32px;font-weight:300}
+
+/* paywall */
+#pay{background:radial-gradient(ellipse 70% 30% at 50% 0,#1e3a6e,#000 70%);padding-bottom:20px}
+#pay h2{text-align:center;font-size:36px;margin:6px 0 24px}
+.feat{display:flex;gap:14px;margin-bottom:18px}
+.feat .ic{width:32px;height:32px;border-radius:10px;background:#12274d;color:var(--ac);display:grid;place-items:center;flex:none}
+.feat .ic svg{width:16px;height:16px}
+.feat strong{display:block;font-size:16px;font-weight:600}
+.feat small{color:var(--mu);font-size:13px}
+.plan{border:1px solid var(--ac);background:#0b1220;border-radius:20px;padding:20px;margin:12px 0 18px;position:relative;box-shadow:0 0 30px #3b82f622}
+.plan .off{position:absolute;top:0;right:0;background:var(--ac);font-size:10px;font-weight:700;padding:4px 10px;border-radius:0 20px 0 10px}
+.plan .pp{display:flex;justify-content:space-between;align-items:flex-end}
+.plan .pp b{font-size:28px;font-weight:700}
+.legal{display:flex;justify-content:center;gap:28px;font-size:11px;color:var(--mu);margin-top:16px}
+.x{position:absolute;right:20px;top:20px;z-index:3}
+</style>
+</head>
+<body>
+<div id="app">
+
+<section class="screen on" id="welcome">
+  <div class="sphere" aria-hidden="true"></div>
+  <div class="hero">
+    <div class="kick">The Ultimate</div>
+    <h1>Flow <b>State</b></h1>
+    <p>Achieve absolute concentration. Read 1,000 words per minute with zero distraction.</p>
+  </div>
+  <button class="btn" data-go="demo" style="position:relative;z-index:2">Start Reading <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <button class="link" data-go="lib">Restore Previous Session</button>
+</section>
+
+<section class="screen" id="demo">
+  <div class="top"><button class="back" data-go="welcome" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><span class="row">Demo Session</span><span style="width:44px"></span></div>
+  <div class="stage demo" id="dStage" aria-live="off"></div>
+  <p class="mu" style="text-align:center;font-size:14px;line-height:1.5;margin:0 0 28px;font-weight:300">The brain processes information faster when<br>the eye stays perfectly still.</p>
+  <div class="panel">
+    <div class="row">Flow Speed <b id="dWpm">450 WPM</b></div>
+    <input type="range" id="dRange" min="150" max="1000" step="10" value="450" aria-label="Flow speed in words per minute">
+    <div class="ctl">
+      <button class="sk" id="dBack" aria-label="Back 10 words"><svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M11 6l-8 6 8 6zM21 6l-8 6 8 6z"/></svg></button>
+      <button class="play" id="dPlay" aria-label="Play"></button>
+      <button class="sk" id="dFwd" aria-label="Forward 10 words"><svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M13 6l8 6-8 6zM3 6l8 6-8 6z"/></svg></button>
+    </div>
+    <button class="btn dark" data-go="import">Continue to Import</button>
+  </div>
+</section>
+
+<section class="screen" id="import">
+  <div class="top"><button class="back" data-go="demo" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+  <div class="kick">Step 03</div>
+  <h2>Feed the <b>Flow</b></h2>
+  <p class="mu" style="margin:0 0 10px;font-size:15px;line-height:1.5">Choose how you want to import your first session. Unlimited words, any format.</p>
+  <button class="opt" data-go="write"><span class="ic"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg></span><span><strong>Write Text</strong><small>Type or paste directly</small></span><span class="go">›</span></button>
+  <label class="opt" style="cursor:pointer"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5"/></svg></span><span><strong>Upload PDF / Doc</strong><small>No word limit on imports</small></span><span class="go">›</span><input id="file" type="file" hidden></label>
+  <button class="opt" data-go="pay"><span class="ic"><svg viewBox="0 0 24 24"><path d="M7 18a5 5 0 01-.5-10 6 6 0 0111.5 1.5A4 4 0 0117 18zM12 12v6M9 15l3-3 3 3"/></svg></span><span><strong>Cloud Import</strong><small>Drive, Dropbox, Notion</small></span><span class="go">›</span></button>
+  <button class="opt" disabled><span class="ic"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3A4 4 0 0010 18.7l1-1"/></svg></span><span><strong>Web URL</strong><small>Import article from link</small></span><span class="tag">SOON</span></button>
+  <button class="link" data-go="lib" style="margin-top:auto;padding-top:24px">Skip for now</button>
+</section>
+
+<section class="screen" id="write">
+  <div class="top"><div style="display:flex;align-items:center;gap:14px"><button class="back" data-go="import" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><span style="font-size:18px;font-weight:300">New <b style="font-weight:700">Session</b></span></div><button id="clear" style="color:var(--ac);font-size:14px;font-weight:500">Clear</button></div>
+  <textarea id="txt" aria-label="Paste or type your text"></textarea>
+  <div class="meta"><div>Word count<b id="wc">0 words</b></div><div>Est. time<b id="et">0 sec</b></div></div>
+  <p class="mu" style="text-align:center;font-size:11px;margin:4px 0 20px">Our engine automatically optimizes the visual rhythm for your reading speed.</p>
+  <button class="btn" id="launch">Launch Reader</button>
+</section>
+
+<section class="screen" id="lib">
+  <div class="top" style="margin-bottom:26px"><div><div class="row" style="letter-spacing:.2em">Flow Archive</div><h2 style="margin:6px 0 0;font-size:26px;font-weight:300">My Library</h2></div><span class="back"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3"/><path d="M6 19c1-3 3-4 6-4s5 1 6 4"/></svg></span></div>
+  <div class="row" style="justify-content:flex-start">Continue Reading</div>
+  <button class="cur" data-read="0"><div style="display:flex;justify-content:space-between;align-items:center"><span class="chip" style="font-size:10px;letter-spacing:.06em;border-radius:6px;padding:4px 8px">CURRENT FLOW</span><span class="mu" style="font-size:13px" id="curLeft"></span></div><h3 id="curTitle"></h3><div class="mu" style="font-size:13px" id="curMeta"></div><div class="bar"><i id="curBar"></i></div></button>
+  <div class="row" style="justify-content:flex-start;margin-bottom:6px">Saved Content</div>
+  <div id="items"></div>
+  <nav class="nav" aria-label="Main">
+    <button class="a" data-go="lib"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M8 5V3h8v2"/></svg>Vault</button>
+    <button data-go="import"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Import</button>
+    <button data-go="stats"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 16v-4M12 16V8M15 16v-6"/></svg>Stats</button>
+    <button data-go="demo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Focus</button>
+  </nav>
+</section>
+
+<section class="screen" id="stats">
+  <div class="top"><button class="back" data-go="lib" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+  <div class="kick">Flow Archive</div>
+  <h2>Your <b>Stats</b></h2>
+  <div class="stats"><div class="stat"><b id="sW">0</b><small class="mu">Words read</small></div><div class="stat"><b id="sA">0</b><small class="mu">Avg WPM</small></div><div class="stat"><b id="sS">0</b><small class="mu">Sessions</small></div><div class="stat"><b id="sD">3</b><small class="mu">In your vault</small></div></div>
+  <p class="mu" style="font-size:13px;margin-top:20px">Stats update as you read in this session.</p>
+</section>
+
+<section class="screen" id="pay">
+  <button class="back x" data-go="import" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div style="height:70px"></div>
+  <div class="kick" style="text-align:center;letter-spacing:.3em">Pro Membership</div>
+  <h2 style="margin-top:12px">Pure <b>Flow</b></h2>
+  <div class="feat"><span class="ic"><svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg></span><div><strong>Unlimited Speed Reading</strong><small>No daily word limits or library caps.</small></div></div>
+  <div class="feat"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5"/></svg></span><div><strong>All File Types</strong><small>PDF, EPUB, Docx, and Web Imports.</small></div></div>
+  <div class="feat"><span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></span><div><strong>Priority Processing</strong><small>Instant text parsing and cloud sync.</small></div></div>
+  <div class="plan"><span class="off">50% OFF</span><div class="pp"><div><strong style="font-size:18px">Yearly Plan</strong><div class="mu" style="font-size:12px;margin-top:4px">$59.99 / year billed annually</div></div><div style="text-align:right"><b>$4.99</b><div class="mu" style="font-size:12px">/ month</div></div></div><div style="border-top:1px solid #1d2a44;margin-top:14px;padding-top:12px;font-size:12px;color:#b5b5be"><span style="color:var(--ok)">✓</span> Includes 7-day free trial</div></div>
+  <button class="btn" id="trial">Start 7-Day Free Trial</button>
+  <div class="legal"><span>Terms</span><span>Restore</span><span>Privacy</span></div>
+</section>
+
+<section class="screen" id="reader">
+  <div class="top" style="align-items:flex-start"><div><div class="row" style="letter-spacing:.2em">Flow State</div><div id="rTitle" style="font-weight:600;margin-top:4px"></div></div><button class="back" id="rClose" aria-label="Close reader"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="stage" id="rStage" aria-live="off"></div>
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px"><div><div class="row" style="font-size:10px">Estimated time</div><div style="margin-top:6px"><span style="font-size:20px" id="rLeft">0:00</span> <span class="mu" style="font-size:13px">remaining</span></div></div><div style="text-align:right"><span class="chip" id="rWpm">450 WPM</span><div class="row" style="font-size:10px;margin-top:6px;justify-content:flex-end">Flow Level</div></div></div>
+  <input type="range" id="rRange" min="150" max="1000" step="10" value="450" aria-label="Flow level in words per minute" style="margin:6px 0 26px">
+  <div class="ctl" style="margin-bottom:10px"><button class="sk" id="rRestart" aria-label="Restart"><svg viewBox="0 0 24 24"><path d="M4 5v14M20 5l-10 7 10 7z" style="fill:currentColor"/></svg></button><button class="sk" id="rBack" aria-label="Back 10 words"><svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M11 6l-8 6 8 6zM21 6l-8 6 8 6z"/></svg></button><button class="play" id="rPlay" aria-label="Pause"></button><button class="sk" id="rFwd" aria-label="Forward 10 words"><svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M13 6l8 6-8 6zM3 6l8 6-8 6z"/></svg></button></div>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" style="stroke-width:4"/></svg>';
+let cur='welcome',stat={w:0,t:0,s:0};
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));cur=id;if(id==='lib')renderLib();if(id==='stats')renderStats();if(id!=='demo')demo.pause();if(id!=='reader')rd.pause();if(id==='demo'){demo.set(DEMO,0);demo.play()}}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){show(g.dataset.go);return}const r=e.target.closest('[data-read]');if(r)openDoc(+r.dataset.read)});
+
+function split(w){const n=w.replace(/[^\p{L}\p{N}]/gu,'').length;const i=Math.min(w.length-1,n<=1?0:n<=5?1:n<=9?2:3);return[w.slice(0,i),w[i]||'',w.slice(i+1)]}
+function engine(o){
+  let words=[],i=0,timer=null,playing=false,wpm=o.wpm,since=0;
+  const paint=()=>{const w=words[i]||'';const[a,b,c]=split(w);o.stage.innerHTML='<span class="l"></span><span class="p"></span><span class="r"></span>';const s=o.stage.children;s[0].textContent=a;s[1].textContent=b;s[2].textContent=c;o.tick&&o.tick(i,words.length,wpm)};
+  const delay=w=>{let d=60000/wpm;if(/[.!?]$/.test(w))d*=2;else if(/[,;:]$/.test(w))d*=1.5;if(w.length>10)d*=1.25;return d};
+  const step=()=>{if(!playing)return;if(i>=words.length-1){pause();o.done&&o.done();return}i++;stat.w++;stat.t+=delay(words[i-1]);paint();timer=setTimeout(step,delay(words[i]))};
+  function play(){if(playing||!words.length)return;if(i>=words.length-1)i=0;playing=true;o.btn.innerHTML=PAUSE;o.btn.setAttribute('aria-label','Pause');paint();timer=setTimeout(step,delay(words[i]))}
+  function pause(){playing=false;clearTimeout(timer);o.btn.innerHTML=PLAY;o.btn.setAttribute('aria-label','Play')}
+  o.btn.onclick=()=>playing?pause():play();
+  o.range.oninput=()=>{wpm=+o.range.value;paint()};
+  const jump=n=>{i=Math.max(0,Math.min(words.length-1,i+n));paint()};
+  o.back.onclick=()=>jump(-10);o.fwd.onclick=()=>jump(10);
+  return{play,pause,jump,set(t,pos){pause();words=t.split(/\s+/).filter(Boolean);i=pos||0;wpm=+o.range.value;paint()},get i(){return i},get n(){return words.length},get wpm(){return wpm},restart(){i=0;paint()}}
+}
+const DEMO='Focus. The brain processes information faster when the eye stays perfectly still. Words arrive one at a time, anchored to a single point, so nothing moves but meaning. Slow down or speed up whenever you like. This is your Flow State.';
+const demo=engine({stage:$('#dStage'),btn:$('#dPlay'),range:$('#dRange'),back:$('#dBack'),fwd:$('#dFwd'),wpm:450,tick:(i,n,w)=>{$('#dWpm').textContent=w+' WPM'},done(){}});
+const fmt=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
+let docIdx=0;
+const rd=engine({stage:$('#rStage'),btn:$('#rPlay'),range:$('#rRange'),back:$('#rBack'),fwd:$('#rFwd'),wpm:450,
+  tick(i,n,w){$('#rWpm').textContent=w+' WPM';$('#rLeft').textContent=fmt((n-i)*60/w);const d=docs[docIdx];if(d)d.pos=i/Math.max(1,n-1)},done(){}});
+$('#rRestart').onclick=()=>rd.restart();
+$('#rClose').onclick=()=>show('lib');
+
+const LOREM='In the quiet depths of concentration, the mind discovers its true velocity. Efficiency is not just about moving fast; it is about reducing the friction between thought and comprehension. When we eliminate the physical movement of the eye, we unlock a direct pipeline to the neural pathways of understanding. This is the essence of Flow State: total immersion, total clarity. ';
+const docs=[
+ {title:'The Psychology of Flow States in Modern Work',by:'Mihaly Csikszentmihalyi',wpm:520,pos:.62,text:LOREM.repeat(6)},
+ {title:'Deep Work Principles',by:'',wpm:480,pos:.2,text:LOREM.repeat(8)},
+ {title:'Atomic Habits Summary',by:'',wpm:650,pos:1,text:LOREM.repeat(4),done:1},
+ {title:'Meditations (Book 1)',by:'',wpm:420,pos:.45,text:LOREM.repeat(7)}
+];
+const left=d=>{const n=d.text.split(/\s+/).length*(1-d.pos);return Math.max(1,Math.round(n/d.wpm))+'m left'};
+function renderLib(){const c=docs[0];$('#curLeft').textContent=left(c);$('#curTitle').textContent=c.title;$('#curMeta').textContent=c.by+' • '+c.wpm+' WPM';$('#curBar').style.width=c.pos*100+'%';
+ $('#items').innerHTML=docs.slice(1).map((d,k)=>`<button class="item" data-read="${k+1}"><span class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5"/></svg></span><span class="bd"><strong></strong><span class="pr"><span class="bar"><i style="width:${d.pos*100}%;${d.done?'background:var(--ok);box-shadow:none':''}"></i></span><span style="${d.done?'color:var(--ok)':''}">${d.done?'Done':Math.round(d.pos*100)+'%'}</span></span><small class="mu">${d.done?'Finished':left(d)} • ${d.wpm} WPM</small></span></button>`).join('');
+ document.querySelectorAll('#items strong').forEach((s,k)=>s.textContent=docs[k+1].title)}
+function openDoc(k){docIdx=k;const d=docs[k];$('#rTitle').textContent=d.title;$('#rRange').value=d.wpm;stat.s++;show('reader');rd.set(d.text,d.done?0:Math.floor(d.pos*d.text.split(/\s+/).length));rd.play()}
+function renderStats(){$('#sW').textContent=stat.w.toLocaleString();$('#sS').textContent=stat.s;$('#sA').textContent=stat.t>0?Math.round(stat.w/(stat.t/60000)):0;$('#sD').textContent=docs.length}
+
+const txt=$('#txt');
+const count=()=>{const n=txt.value.split(/\s+/).filter(Boolean).length;$('#wc').textContent=n.toLocaleString()+' words';const s=Math.round(n*60/450);$('#et').textContent=s>=60?Math.round(s/60)+' min':s+' sec'};
+txt.oninput=count;$('#clear').onclick=()=>{txt.value='';count();txt.focus()};
+txt.value=LOREM.slice(0,-1);count();
+$('#launch').onclick=()=>{const t=txt.value.trim();if(!t){txt.focus();return}docs.unshift({title:t.split(/\s+/).slice(0,5).join(' ')+'…',by:'Pasted text',wpm:450,pos:0,text:t});openDoc(0)};
+$('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(!/\.(txt|md)$/i.test(f.name)&&!/^text\//.test(f.type)){show('pay');return}const t=await f.text();docs.unshift({title:f.name.replace(/\.\w+$/,''),by:'Uploaded file',wpm:450,pos:0,text:t});openDoc(0)};
+$('#trial').onclick=()=>{$('#trial').textContent='Trial started';setTimeout(()=>{$('#trial').textContent='Start 7-Day Free Trial';show('import')},900)};
+</script>
+</body>
+</html>
