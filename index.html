@@ -120,7 +120,7 @@ textarea{width:100%;flex:1;min-height:200px;background:#111113;border:1px solid 
 #demo p.mu{font-size:17px!important}
 .ctl{gap:44px}.ctl .sk{width:56px;height:56px}.play{width:84px;height:84px}
 input[type=range]{height:6px}input[type=range]::-webkit-slider-thumb{width:26px;height:26px}
-#reader input[type=range]{max-width:720px;align-self:center}
+#reader input[type=range],#seekWrap{max-width:720px;width:100%;align-self:center}
 #reader .ctl{margin-top:8px}
 h2{font-size:38px}
 textarea{font-size:19px;min-height:280px}
@@ -221,6 +221,8 @@ textarea{font-size:19px;min-height:280px}
 <section class="screen" id="reader">
   <div class="top" style="align-items:flex-start"><div><div class="row" style="letter-spacing:.2em">Flow State</div><div id="rTitle" style="font-weight:600;margin-top:4px"></div></div><button class="back" id="rClose" aria-label="Close reader"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="stage" id="rStage" aria-live="off"></div>
+  <div id="seekWrap"><div class="row" style="font-size:10px">Position <b id="rPct">0%</b></div>
+  <input type="range" id="rSeek" min="0" max="1000" step="1" value="0" aria-label="Position in text" style="margin:12px 0 22px"></div>
   <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px"><div><div class="row" style="font-size:10px">Estimated time</div><div style="margin-top:6px"><span style="font-size:20px" id="rLeft">0:00</span> <span class="mu" style="font-size:13px">remaining</span></div></div><div style="text-align:right"><span class="chip" id="rWpm">450 WPM</span><div class="row" style="font-size:10px;margin-top:6px;justify-content:flex-end">Flow Level</div></div></div>
   <input type="range" id="rRange" min="150" max="1000" step="10" value="450" aria-label="Flow level in words per minute" style="margin:6px 0 26px">
   <div class="ctl" style="margin-bottom:10px"><button class="sk" id="rRestart" aria-label="Restart"><svg viewBox="0 0 24 24"><path d="M4 5v14M20 5l-10 7 10 7z" style="fill:currentColor"/></svg></button><button class="sk" id="rBack" aria-label="Back 10 words"><svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M11 6l-8 6 8 6zM21 6l-8 6 8 6z"/></svg></button><button class="play" id="rPlay" aria-label="Pause"></button><button class="sk" id="rFwd" aria-label="Forward 10 words"><svg viewBox="0 0 24 24" style="fill:currentColor"><path d="M13 6l8 6-8 6zM3 6l8 6-8 6z"/></svg></button></div>
@@ -246,15 +248,16 @@ function engine(o){
   o.range.oninput=()=>{wpm=+o.range.value;paint()};
   const jump=n=>{i=Math.max(0,Math.min(words.length-1,i+n));paint()};
   o.back.onclick=()=>jump(-10);o.fwd.onclick=()=>jump(10);
-  return{play,pause,jump,set(t,pos){pause();words=t.split(/\s+/).filter(Boolean);i=pos||0;wpm=+o.range.value;paint()},get i(){return i},get n(){return words.length},get wpm(){return wpm},restart(){i=0;paint()}}
+  return{play,pause,jump,set(t,pos){pause();words=t.split(/\s+/).filter(Boolean);i=pos||0;wpm=+o.range.value;paint()},get i(){return i},get n(){return words.length},get wpm(){return wpm},restart(){i=0;paint()},seek(f){i=Math.round(f*(words.length-1));paint()}}
 }
 const DEMO='Focus. The brain processes information faster when the eye stays perfectly still. Words arrive one at a time, anchored to a single point, so nothing moves but meaning. Slow down or speed up whenever you like. This is your Flow State.';
 const demo=engine({stage:$('#dStage'),btn:$('#dPlay'),range:$('#dRange'),back:$('#dBack'),fwd:$('#dFwd'),wpm:450,tick:(i,n,w)=>{$('#dWpm').textContent=w+' WPM'},done(){}});
 const fmt=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
 let docIdx=0;
 const rd=engine({stage:$('#rStage'),btn:$('#rPlay'),range:$('#rRange'),back:$('#rBack'),fwd:$('#rFwd'),wpm:450,
-  tick(i,n,w){$('#rWpm').textContent=w+' WPM';$('#rLeft').textContent=fmt((n-i)*60/w);const d=docs[docIdx];if(d)d.pos=i/Math.max(1,n-1)},done(){}});
+  tick(i,n,w){$('#rWpm').textContent=w+' WPM';$('#rLeft').textContent=fmt((n-i)*60/w);const f=i/Math.max(1,n-1);$('#rSeek').value=Math.round(f*1000);$('#rPct').textContent=Math.round(f*100)+'%';const d=docs[docIdx];if(d)d.pos=f},done(){}});
 $('#rRestart').onclick=()=>rd.restart();
+$('#rSeek').oninput=e=>rd.seek(+e.target.value/1000);
 $('#rClose').onclick=()=>show('lib');
 
 const LOREM='In the quiet depths of concentration, the mind discovers its true velocity. Efficiency is not just about moving fast; it is about reducing the friction between thought and comprehension. When we eliminate the physical movement of the eye, we unlock a direct pipeline to the neural pathways of understanding. This is the essence of Flow State: total immersion, total clarity. ';
